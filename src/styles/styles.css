@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ ShipCore design tokens — same palette as React version ============ */
+:root {
+  --radius: 0.625rem;
+  /* LatAm SaaS palette: deep teal/emerald + slate + amber accent */
+  --background: 60 0.4% 98.5%;
+  --foreground: 220 9% 21%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 9% 21%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 9% 21%;
+  /* teal-700 #0f766e */
+  --primary: 178.5 47% 24%;
+  --primary-foreground: 200 0% 98.5%;
+  --secondary: 200 5% 96%;
+  --secondary-foreground: 220 9% 21%;
+  --muted: 200 5% 96%;
+  --muted-foreground: 220 6% 52%;
+  /* amber-500 */
+  --accent: 80 70% 50%;
+  --accent-foreground: 60 50% 18%;
+  --destructive: 27 90% 58%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 6% 92%;
+  --input: 220 6% 92%;
+  --ring: 178.5 47% 24%;
+  --chart-1: 178.5 47% 24%;
+  --chart-2: 184.7 50% 35%;
+  --chart-3: 80 70% 50%;
+  --chart-4: 150 50% 35%;
+  --chart-5: 220 14% 30%;
+  --sidebar: 220 9% 21%;
+  --sidebar-foreground: 200 0% 96%;
+  --sidebar-primary: 178.5 47% 24%;
+  --sidebar-primary-foreground: 200 0% 98.5%;
+  --sidebar-accent: 220 9% 27%;
+  --sidebar-accent-foreground: 200 0% 96%;
+  --sidebar-border: 220 9% 30%;
+  --sidebar-ring: 178.5 47% 24%;
+}
+
+.dark {
+  --background: 220 14% 16%;
+  --foreground: 200 0% 96%;
+  --card: 220 9% 21%;
+  --card-foreground: 200 0% 96%;
+  --popover: 220 9% 21%;
+  --popover-foreground: 200 0% 96%;
+  --primary: 178.5 40% 36%;
+  --primary-foreground: 220 14% 16%;
+  --secondary: 220 9% 27%;
+  --secondary-foreground: 200 0% 96%;
+  --muted: 220 9% 27%;
+  --muted-foreground: 220 6% 70%;
+  --accent: 80 60% 60%;
+  --accent-foreground: 220 9% 21%;
+  --destructive: 22 90% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 178.5 40% 36%;
+  --chart-1: 178.5 40% 36%;
+  --chart-2: 184.7 45% 45%;
+  --chart-3: 80 60% 60%;
+  --chart-4: 150 45% 45%;
+  --chart-5: 220 6% 60%;
+  --sidebar: 220 14% 13%;
+  --sidebar-foreground: 200 0% 96%;
+  --sidebar-primary: 178.5 40% 36%;
+  --sidebar-primary-foreground: 200 0% 98.5%;
+  --sidebar-accent: 220 9% 22%;
+  --sidebar-accent-foreground: 200 0% 96%;
+  --sidebar-border: 0 0% 100%;
+  --sidebar-ring: 178.5 40% 36%;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  html,
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    margin: 0;
+  }
+  /* Custom scrollbar */
+  .scroll-area-shipcore::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-area-shipcore::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-area-shipcore::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 8px;
+  }
+  .scroll-area-shipcore::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+/* ============ shadcn-style utility component classes ============ */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+  .btn-outline {
+    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+  }
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+  .btn-sm {
+    @apply h-9 px-3;
+  }
+  .btn-md {
+    @apply h-10 px-4 py-2;
+  }
+  .btn-lg {
+    @apply h-11 px-8;
+  }
+  .btn-icon {
+    @apply h-10 w-10 p-0;
+  }
+  .input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .label {
+    @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+  .card {
+    @apply rounded-xl border bg-card text-card-foreground shadow-sm;
+  }
+  .card-header {
+    @apply flex flex-col space-y-1.5 p-6;
+  }
+  .card-title {
+    @apply text-lg font-semibold leading-none tracking-tight;
+  }
+  .card-description {
+    @apply text-sm text-muted-foreground;
+  }
+  .card-content {
+    @apply p-6 pt-0;
+  }
+  .card-footer {
+    @apply flex items-center p-6 pt-0;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors;
+  }
+  .badge-default {
+    @apply border-transparent bg-primary text-primary-foreground;
+  }
+  .badge-secondary {
+    @apply border-transparent bg-secondary text-secondary-foreground;
+  }
+  .badge-outline {
+    @apply text-foreground;
+  }
+  .badge-destructive {
+    @apply border-transparent bg-destructive text-destructive-foreground;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-md bg-muted;
+  }
+  .table-wrapper {
+    @apply w-full overflow-auto;
+  }
+  .table {
+    @apply w-full caption-bottom text-sm;
+  }
+  .table-header {
+    @apply [&_tr]:border-b;
+  }
+  .table-body {
+    @apply [&_tr:last-child]:border-0;
+  }
+  .table-row {
+    @apply border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted;
+  }
+  .table-head {
+    @apply h-11 px-3 text-left align-middle font-medium text-muted-foreground;
+  }
+  .table-cell {
+    @apply p-3 align-middle;
+  }
+  .tabs-list {
+    @apply inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground;
+  }
+  .tabs-trigger {
+    @apply inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  }
+  .tabs-trigger-active {
+    @apply bg-background text-foreground shadow-sm;
+  }
+  .dialog-backdrop {
+    @apply fixed inset-0 z-50 bg-black/50 backdrop-blur-sm;
+  }
+  .dialog-panel {
+    @apply fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg;
+  }
+}
