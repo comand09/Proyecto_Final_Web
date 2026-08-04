@@ -8,7 +8,7 @@ export class DashboardService {
   private api = inject(ApiClient);
 
   /** Returns the dashboard aggregate for the current organization. */
-  load(): DashboardData {
+  load(): DashboardData | null {
     return this.api.dashboard();
   }
 }

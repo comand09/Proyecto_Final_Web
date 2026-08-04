@@ -15,11 +15,11 @@ export class OrgService {
     return this.api.listUsers();
   }
 
-  createUser(input: Partial<User>): User {
+  createUser(input: any): User {
     return this.api.createUser(input);
   }
 
-  updateUser(id: string, patch: Partial<User>): User {
+  updateUser(id: string, patch: Partial<User>): User | null {
     return this.api.updateUser(id, patch);
   }
 
@@ -31,7 +31,7 @@ export class OrgService {
     return this.api.listApiKeys();
   }
 
-  createApiKey(label: string, expiresAt: string): { key: string; apiKey: ApiKey } {
+  createApiKey(label: string, expiresAt?: string): ApiKey {
     return this.api.createApiKey(label, expiresAt);
   }
 

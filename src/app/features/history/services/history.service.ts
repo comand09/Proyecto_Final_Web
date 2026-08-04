@@ -8,6 +8,6 @@ export class HistoryService {
   private api = inject(ApiClient);
 
   list(): Quote[] {
-    return this.api.listQuotes();
+    return this.api.listQuotes().items;
   }
 }

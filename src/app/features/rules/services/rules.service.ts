@@ -11,11 +11,11 @@ export class RulesService {
     return this.api.listRules();
   }
 
-  create(rule: Partial<ShippingRule>): ShippingRule {
+  create(rule: any): ShippingRule {
     return this.api.createRule(rule);
   }
 
-  update(id: string, patch: Partial<ShippingRule>): ShippingRule {
+  update(id: string, patch: Partial<ShippingRule>): ShippingRule | null {
     return this.api.updateRule(id, patch);
   }
 

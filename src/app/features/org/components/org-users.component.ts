@@ -6,7 +6,7 @@ import { AuthService } from "../../../core/services/auth.service";
 import { UiService } from "../../../core/services/ui.service";
 import { I18nService } from "../../../core/services/i18n.service";
 import { ToastService } from "../../../core/services/toast.service";
-import { Role, User } from "../../../core/models/shipcore.models";
+import { Organization, Role, User } from "../../../core/models/shipcore.models";
 import { PageHeaderComponent } from "../../../shared/components/page-header/page-header.component";
 import { DataStateComponent } from "../../../shared/components/data-state/data-state.component";
 import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialog/confirm-dialog.component";
@@ -16,19 +16,25 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, PageHeaderComponent, DataStateComponent, ConfirmDialogComponent],
   template: `
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
+    <div class="shipcore-panel-page org-users-panel space-y-6">
+      <div class="section-heading flex items-center justify-between">
         <div>
           <h2 class="text-lg font-semibold">Usuarios</h2>
           <p class="text-sm text-muted-foreground">Gestioná los usuarios de tu organización.</p>
         </div>
-        <button class="btn btn-primary btn-sm" (click)="openCreate()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-          Nuevo usuario
-        </button>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-outline btn-sm" (click)="syncBackend()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
+            Sincronizar a BD
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="openCreate()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+            Nuevo usuario
+          </button>
+        </div>
       </div>
 
-      <app-data-state [isLoading]="loading()" [error]="error()" [onRetry]="refresh" [empty]="!loading() && !error() && users().length === 0">
+      <app-data-state class="shipcore-data-block" [isLoading]="loading()" [error]="error()" [onRetry]="refresh" [empty]="!loading() && !error() && users().length === 0">
         <div class="card">
           <div class="card-content">
             <div class="overflow-x-auto">
@@ -37,6 +43,7 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
                   <tr class="border-b text-left text-xs text-muted-foreground">
                     <th class="px-3 py-2 font-medium">Nombre</th>
                     <th class="px-3 py-2 font-medium">Email</th>
+                    <th class="px-3 py-2 font-medium">Organizacion</th>
                     <th class="px-3 py-2 font-medium">Rol</th>
                     <th class="px-3 py-2 font-medium">Estado</th>
                     <th class="px-3 py-2 font-medium">Creado</th>
@@ -48,6 +55,7 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
                     <tr class="border-b last:border-0">
                       <td class="px-3 py-2 font-medium">{{ u.name }}</td>
                       <td class="px-3 py-2 text-muted-foreground">{{ u.email }}</td>
+                      <td class="px-3 py-2 text-muted-foreground">{{ organizationName(u) }}</td>
                       <td class="px-3 py-2">
                         <span class="badge" [class]="u.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'badge-secondary'">
                           {{ u.role === 'admin' ? 'Admin' : 'Operador' }}
@@ -103,6 +111,15 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
                 @if (form.controls.password.touched && form.controls.password.invalid) { <p class="mt-1 text-xs text-destructive">Mínimo 3 caracteres</p> }
               </div>
               <div>
+                <label for="organizationId" class="label">Organizacion</label>
+                <select id="organizationId" formControlName="organizationId" class="input mt-1.5">
+                  @for (org of organizations(); track org.id) {
+                    <option [value]="org.id">{{ org.name }}</option>
+                  }
+                </select>
+                @if (form.controls.organizationId.touched && form.controls.organizationId.invalid) { <p class="mt-1 text-xs text-destructive">Selecciona una organizacion</p> }
+              </div>
+              <div>
                 <label for="role" class="label">Rol</label>
                 <select id="role" formControlName="role" class="input mt-1.5">
                   <option value="operador">Operador</option>
@@ -156,6 +173,7 @@ export class OrgUsersComponent implements OnInit {
   protected loading = signal(false);
   protected error = signal<unknown>(null);
   protected users = signal<User[]>([]);
+  protected organizations = signal<Organization[]>([]);
   protected dialogOpen = signal(false);
   protected editing = signal<User | null>(null);
   protected submitting = signal(false);
@@ -167,31 +185,42 @@ export class OrgUsersComponent implements OnInit {
     name: ["", [Validators.required, Validators.minLength(2)]],
     email: ["", [Validators.required, Validators.email]],
     password: ["", [Validators.required, Validators.minLength(3)]],
+    organizationId: ["", [Validators.required]],
     role: ["operador" as Role, [Validators.required]],
     active: [true],
   });
 
   ngOnInit(): void {
+    this.loadOrganizations();
     this.refresh();
+  }
+
+  private loadOrganizations(): void {
+    this.api.listOrganizationsObs().subscribe({
+      next: (organizations) => this.organizations.set(organizations || []),
+      error: () => this.organizations.set([]),
+    });
   }
 
   refresh = (): void => {
     this.loading.set(true);
     this.error.set(null);
-    setTimeout(() => {
-      try {
-        this.users.set(this.api.listUsers());
-      } catch (e) {
-        this.error.set(e);
-      } finally {
+    this.api.listUsersObs().subscribe({
+      next: (users) => {
+        this.users.set(users || []);
         this.loading.set(false);
-      }
-    }, 100);
+      },
+      error: (e) => {
+        this.error.set(e);
+        this.loading.set(false);
+      },
+    });
   };
 
   openCreate(): void {
     this.editing.set(null);
-    this.form.reset({ name: "", email: "", password: "", role: "operador", active: true });
+    const defaultOrganizationId = this.organizations()[0]?.id || this.auth.organization()?.id || "";
+    this.form.reset({ name: "", email: "", password: "", organizationId: defaultOrganizationId, role: "operador", active: true });
     this.dialogOpen.set(true);
   }
 
@@ -200,7 +229,8 @@ export class OrgUsersComponent implements OnInit {
     this.form.reset({
       name: u.name,
       email: u.email,
-      password: u.password,
+      password: u.password || "••••••••",
+      organizationId: u.organizationId,
       role: u.role,
       active: u.active,
     });
@@ -220,47 +250,68 @@ export class OrgUsersComponent implements OnInit {
     }
     this.submitting.set(true);
     const v = this.form.getRawValue();
-    setTimeout(() => {
-      try {
-        if (this.editing()) {
-          this.api.updateUser(this.editing()!.id, {
-            name: v.name,
-            email: v.email,
-            password: v.password,
-            role: v.role,
-            active: v.active,
-          });
-          this.toast.success("Usuario actualizado", v.name);
-        } else {
-          this.api.createUser(v);
-          this.toast.success("Usuario creado", v.name);
-        }
-        this.dialogOpen.set(false);
-        this.editing.set(null);
-        this.refresh();
-      } catch (e: any) {
-        this.toast.error("Error", e?.message ?? "No se pudo guardar");
-      } finally {
-        this.submitting.set(false);
-      }
-    }, 300);
+
+    if (this.editing()) {
+      this.api.updateUserObs(this.editing()!.id, v).subscribe({
+        next: () => {
+          this.toast.success("Usuario actualizado en BD", v.name);
+          this.closeDialog();
+          this.refresh();
+          this.submitting.set(false);
+        },
+        error: (err) => {
+          this.toast.error("Error", err?.error?.message ?? err?.message ?? "No se pudo actualizar");
+          this.submitting.set(false);
+        },
+      });
+    } else {
+      this.api.createUserObs(v).subscribe({
+        next: () => {
+          this.toast.success("Usuario insertado en BD", v.name);
+          this.closeDialog();
+          this.refresh();
+          this.submitting.set(false);
+        },
+        error: (err) => {
+          this.toast.error("Error", err?.error?.message ?? err?.message ?? "No se pudo guardar");
+          this.submitting.set(false);
+        },
+      });
+    }
   }
 
   confirmDelete(): void {
     const target = this.deleteTarget();
     if (!target) return;
-    try {
-      this.api.deleteUser(target.id);
-      this.toast.success("Usuario eliminado", target.name);
-      this.refresh();
-    } catch (e: any) {
-      this.toast.error("Error", e?.message ?? "No se pudo eliminar");
-    } finally {
-      this.deleteTarget.set(null);
-    }
+    this.api.deleteUserObs(target.id).subscribe({
+      next: () => {
+        this.toast.success("Usuario eliminado de BD", target.name);
+        this.deleteTarget.set(null);
+        this.refresh();
+      },
+      error: (err) => {
+        this.toast.error("Error", err?.error?.message ?? err?.message ?? "No se pudo eliminar");
+        this.deleteTarget.set(null);
+      },
+    });
+  }
+
+
+  syncBackend(): void {
+    this.toast.info("Enviando datos a BD...", "Insertando datos en la base de datos backend.");
+    this.api.syncMockDataToBackend().subscribe({
+      next: (res) => {
+        this.toast.success("Inserción completada en BD", `Carriers: ${res.carriers}, Reglas: ${res.rules}, Usuarios: ${res.users}`);
+        this.refresh();
+      },
+    });
   }
 
   fmtDate(d: string): string {
     return this.i18n.formatDate(d, this.ui.locale());
+  }
+
+  organizationName(user: User): string {
+    return user.organizationName || this.organizations().find((org) => org.id === user.organizationId)?.name || "Sin organizacion";
   }
 }

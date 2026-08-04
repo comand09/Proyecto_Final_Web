@@ -8,19 +8,19 @@ import { Quote, QuoteResult, QuoteInput } from "../../../core/models/shipcore.mo
 export class QuotesService {
   private api = inject(ApiClient);
 
-  createQuote(input: QuoteInput): { quote: Quote; results: QuoteResult[] } {
+  createQuote(input: QuoteInput): Quote | null {
     return this.api.createQuote(input);
   }
 
   listQuotes(): Quote[] {
-    return this.api.listQuotes();
+    return this.api.listQuotes().items;
   }
 
-  selectResult(quoteId: string, resultId: string): Quote {
+  selectResult(quoteId: string, resultId: string): Quote | null {
     return this.api.selectQuoteResult(quoteId, resultId);
   }
 
-  getQuote(quoteId: string): Quote | undefined {
+  getQuote(quoteId: string): Quote | null {
     return this.api.getQuote(quoteId);
   }
 

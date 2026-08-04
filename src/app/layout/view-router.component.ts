@@ -11,6 +11,7 @@ import { HistoryPageComponent } from "../features/history/pages/history.page";
 import { CarriersListPageComponent } from "../features/carriers/pages/carriers-list.page";
 import { RulesListPageComponent } from "../features/rules/pages/rules-list.page";
 import { OrgConfigPageComponent } from "../features/org/pages/org-config.page";
+import { OrgPlanComponent } from "../features/org/components/org-plan.component";
 import { RoleDeniedComponent } from "../shared/components/role-denied/role-denied.component";
 
 @Component({
@@ -26,6 +27,7 @@ import { RoleDeniedComponent } from "../shared/components/role-denied/role-denie
     CarriersListPageComponent,
     RulesListPageComponent,
     OrgConfigPageComponent,
+    OrgPlanComponent,
     RoleDeniedComponent,
   ],
   template: `
@@ -36,6 +38,7 @@ import { RoleDeniedComponent } from "../shared/components/role-denied/role-denie
       @case ("quote-detail") { <app-quote-detail-page [quoteId]="params()['id']" /> }
       @case ("history") { <app-history-page /> }
       @case ("carriers") { <app-carriers-list-page /> }
+      @case ("plan") { <app-org-plan /> }
       @case ("rules") {
         @if (canAccessRules()) { <app-rules-list-page /> }
         @else { <app-role-denied /> }

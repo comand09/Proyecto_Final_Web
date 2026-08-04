@@ -19,7 +19,7 @@ export class CarriersService {
     return this.api.createRate(input);
   }
 
-  updateRate(id: string, patch: Partial<CarrierRate>): CarrierRate {
+  updateRate(id: string, patch: Partial<CarrierRate>): CarrierRate | null {
     return this.api.updateRate(id, patch);
   }
 

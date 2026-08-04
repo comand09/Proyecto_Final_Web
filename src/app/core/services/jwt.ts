@@ -32,15 +32,28 @@ export function decodeToken(token: string): Session | null {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const body = b64urlDecode(parts[1]);
-    const session = JSON.parse(body) as Session;
-    if (!session.userId || !session.organizationId || !session.role || !session.exp) return null;
-    return session;
+    const raw = JSON.parse(body) as any;
+
+    const userId = raw.userId || raw.user_id || raw.id || raw.sub;
+    const organizationId = raw.organizationId || raw.orgId || raw.organization_id || "1";
+    let roleStr = "";
+    if (typeof raw.role === "string") {
+      roleStr = raw.role;
+    } else if (Array.isArray(raw.roles) && raw.roles.length > 0) {
+      roleStr = String(raw.roles[0]);
+    }
+    const role = roleStr.toUpperCase().includes("ADMIN") ? "admin" : "operador";
+    const exp = typeof raw.exp === "number" ? raw.exp : Math.floor(Date.now() / 1000) + 3600;
+
+    if (!userId) return null;
+    return { userId: String(userId), organizationId: String(organizationId), role, exp };
   } catch {
     return null;
   }
 }
 
 export function isExpired(session: Session): boolean {
+  if (!session || !session.exp) return false;
   return Math.floor(Date.now() / 1000) >= session.exp;
 }
 

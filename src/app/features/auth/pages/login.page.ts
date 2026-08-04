@@ -5,6 +5,7 @@ import { AuthService } from "../../../core/services/auth.service";
 import { UiService } from "../../../core/services/ui.service";
 import { ToastService } from "../../../core/services/toast.service";
 import { ApiClient } from "../../../core/services/api-client";
+import { RouterService } from "../../../core/services/router.service";
 import { LOCALES, LOCALE_LABELS, Locale } from "../../../core/services/i18n.service";
 
 @Component({
@@ -130,6 +131,7 @@ export class LoginPageComponent {
   private api = inject(ApiClient);
   private toast = inject(ToastService);
   private fb = inject(FormBuilder);
+  private router = inject(RouterService);
 
   protected locales = LOCALES;
   protected labels = LOCALE_LABELS;
@@ -160,17 +162,23 @@ export class LoginPageComponent {
     }
     this.submitting.set(true);
     const { email, password } = this.form.getRawValue();
-    // Simulate async
-    setTimeout(() => {
-      const res = this.api.login(email, password);
-      if (!res) {
-        this.toast.error("No se pudo iniciar sesión", "Email o contraseña incorrectos.");
+
+    this.api.loginObs(email, password).subscribe({
+      next: (res) => {
+        this.auth.setSession(res);
+        const name = res.user?.name || this.auth.user()?.name || "Usuario";
+        this.toast.success("Bienvenido", `Sesión iniciada como ${name}`);
+        this.router.navigate("dashboard");
         this.submitting.set(false);
-        return;
-      }
-      this.auth.setSession(res);
-      this.toast.success("Bienvenido", `Sesión iniciada como ${res.user.name}`);
-      this.submitting.set(false);
-    }, 400);
+      },
+      error: (err) => {
+        this.toast.error(
+          "Error de autenticación",
+          err?.error?.message ?? "Credenciales incorrectas en la base de datos o backend no disponible."
+        );
+        this.submitting.set(false);
+      },
+    });
   }
+
 }

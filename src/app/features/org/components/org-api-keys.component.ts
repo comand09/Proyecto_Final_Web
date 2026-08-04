@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal , ChangeDetectionStrategy} from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormControl, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ApiClient } from "../../../core/services/api-client";
 import { UiService } from "../../../core/services/ui.service";
 import { I18nService } from "../../../core/services/i18n.service";
@@ -12,10 +13,10 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
 @Component({
   selector: "app-org-api-keys",
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, DataStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, PageHeaderComponent, DataStateComponent, ConfirmDialogComponent],
   template: `
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
+    <div class="shipcore-panel-page org-api-keys-panel space-y-6">
+      <div class="section-heading flex items-center justify-between">
         <div>
           <h2 class="text-lg font-semibold">API Keys</h2>
           <p class="text-sm text-muted-foreground">Claves de acceso a la API de ShipCore.</p>
@@ -26,7 +27,7 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
         </button>
       </div>
 
-      <app-data-state [isLoading]="loading()" [error]="error()" [onRetry]="refresh" [empty]="!loading() && !error() && keys().length === 0">
+      <app-data-state class="shipcore-data-block" [isLoading]="loading()" [error]="error()" [onRetry]="refresh" [empty]="!loading() && !error() && keys().length === 0">
         <div class="card">
           <div class="card-content">
             <div class="overflow-x-auto">
@@ -74,6 +75,21 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
         </div>
       </app-data-state>
 
+      <div class="api-help-grid grid gap-3 lg:grid-cols-3">
+        <div class="rounded-md border bg-muted/30 p-3">
+          <p class="text-xs font-medium uppercase text-muted-foreground">Uso externo</p>
+          <p class="mt-1 text-sm font-semibold">POST /api/v1/external/quotes</p>
+        </div>
+        <div class="rounded-md border bg-muted/30 p-3">
+          <p class="text-xs font-medium uppercase text-muted-foreground">Header</p>
+          <code class="mt-1 block truncate text-xs">X-API-Key: sc_test_...</code>
+        </div>
+        <div class="rounded-md border bg-muted/30 p-3">
+          <p class="text-xs font-medium uppercase text-muted-foreground">Impacto</p>
+          <p class="mt-1 text-sm">Suma uso a la key y al plan de la organizacion.</p>
+        </div>
+      </div>
+
       <!-- Create dialog -->
       @if (createOpen()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -83,16 +99,30 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
             <p class="mt-1 text-sm text-muted-foreground">Elegí el entorno. La key completa se mostrará una sola vez.</p>
             <div class="mt-4 space-y-3">
               <div>
-                <label class="label">Entorno</label>
-                <select class="input mt-1.5" [value]="env()" (change)="onEnvChange($event)">
+                <label class="label" for="api-key-env">Entorno</label>
+                <select id="api-key-env" class="input mt-1.5" [formControl]="envControl">
                   <option value="sandbox">Sandbox</option>
                   <option value="prod">Producción</option>
                 </select>
               </div>
+              <div>
+                <label class="label" for="api-key-quota">Cuota mensual</label>
+                <input
+                  id="api-key-quota"
+                  class="input mt-1.5"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [formControl]="quotaControl"
+                />
+                @if (quotaControl.invalid && quotaControl.touched) {
+                  <p class="mt-1 text-xs text-destructive">La cuota debe ser mayor o igual a 1.</p>
+                }
+              </div>
             </div>
             <div class="mt-6 flex justify-end gap-2">
               <button type="button" class="btn btn-outline btn-md" (click)="closeCreate()" [disabled]="creating()">Cancelar</button>
-              <button type="button" class="btn btn-primary btn-md" (click)="handleCreate()" [disabled]="creating()">
+              <button type="button" class="btn btn-primary btn-md" (click)="handleCreate()" [disabled]="creating() || quotaControl.invalid">
                 @if (creating()) { Generando… } @else { Generar }
               </button>
             </div>
@@ -157,7 +187,11 @@ export class OrgApiKeysComponent implements OnInit {
   protected error = signal<unknown>(null);
   protected keys = signal<ApiKey[]>([]);
   protected createOpen = signal(false);
-  protected env = signal<ApiEnv>("sandbox");
+  protected envControl = new FormControl<ApiEnv>("sandbox", { nonNullable: true, validators: [Validators.required] });
+  protected quotaControl = new FormControl<number>(1000, {
+    nonNullable: true,
+    validators: [Validators.required, Validators.min(1), Validators.max(1000000)],
+  });
   protected creating = signal(false);
   protected createdKey = signal<ApiKey | null>(null);
   protected copied = signal(false);
@@ -170,19 +204,22 @@ export class OrgApiKeysComponent implements OnInit {
   refresh = (): void => {
     this.loading.set(true);
     this.error.set(null);
-    setTimeout(() => {
-      try {
-        this.keys.set(this.api.listApiKeys());
-      } catch (e) {
-        this.error.set(e);
-      } finally {
+    this.api.listApiKeysObs().subscribe({
+      next: (keys) => {
+        this.keys.set(keys || []);
         this.loading.set(false);
-      }
-    }, 100);
+      },
+      error: (e) => {
+        this.error.set(e);
+        this.loading.set(false);
+      },
+    });
   };
 
   openCreate(): void {
-    this.env.set("sandbox");
+    this.envControl.setValue("sandbox");
+    this.quotaControl.setValue(1000);
+    this.quotaControl.markAsUntouched();
     this.createOpen.set(true);
   }
 
@@ -191,25 +228,26 @@ export class OrgApiKeysComponent implements OnInit {
     this.createOpen.set(false);
   }
 
-  onEnvChange(e: Event): void {
-    this.env.set((e.target as HTMLSelectElement).value as ApiEnv);
-  }
-
   handleCreate(): void {
+    this.quotaControl.markAsTouched();
+    if (this.quotaControl.invalid) return;
+
     this.creating.set(true);
-    setTimeout(() => {
-      try {
-        const k = this.api.createApiKey(this.env());
+    const env = this.envControl.value;
+    const quotaLimit = Number(this.quotaControl.value);
+    this.api.createApiKeyObs(env, quotaLimit).subscribe({
+      next: (k) => {
         this.createdKey.set(k);
+        this.keys.set([k, ...this.keys().filter((existing) => existing.id !== k.id)]);
         this.createOpen.set(false);
         this.toast.success("API Key generada", `Entorno: ${k.environment}`);
-        this.refresh();
-      } catch (e: any) {
-        this.toast.error("Error", e?.message ?? "No se pudo generar");
-      } finally {
         this.creating.set(false);
-      }
-    }, 300);
+      },
+      error: (e) => {
+        this.toast.error("Error", e?.error?.message ?? e?.message ?? "No se pudo generar");
+        this.creating.set(false);
+      },
+    });
   }
 
   closeCreatedKey(): void {
@@ -218,28 +256,63 @@ export class OrgApiKeysComponent implements OnInit {
   }
 
   copyKey(key: string): void {
+    const val = key || this.createdKey()?.fullKey || this.createdKey()?.keyPreview || "";
+    if (!val) {
+      this.toast.error("Sin contenido", "La key no está disponible");
+      return;
+    }
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(val)
+        .then(() => {
+          this.copied.set(true);
+          this.toast.success("Copiado", "La key está en el portapapeles");
+          setTimeout(() => this.copied.set(false), 2000);
+        })
+        .catch(() => this.fallbackCopy(val));
+    } else {
+      this.fallbackCopy(val);
+    }
+  }
+
+  private fallbackCopy(text: string): void {
     try {
-      navigator.clipboard.writeText(key);
-      this.copied.set(true);
-      this.toast.success("Copiado", "La key está en el portapapeles");
-      setTimeout(() => this.copied.set(false), 2000);
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.style.position = "fixed";
+      el.style.left = "-9999px";
+      el.style.top = "-9999px";
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(el);
+      if (ok) {
+        this.copied.set(true);
+        this.toast.success("Copiado", "La key está en el portapapeles");
+        setTimeout(() => this.copied.set(false), 2000);
+      } else {
+        this.toast.error("No se pudo copiar", "Copiála manualmente: " + text);
+      }
     } catch {
-      this.toast.error("No se pudo copiar", "Copiala manualmente");
+      this.toast.error("No se pudo copiar", "Copiála manualmente: " + text);
     }
   }
 
   confirmRevoke(): void {
     const target = this.revokeTarget();
     if (!target) return;
-    try {
-      this.api.deleteApiKey(target.id);
-      this.toast.success("API Key revocada", `••••${target.keyPreview}`);
-      this.refresh();
-    } catch (e: any) {
-      this.toast.error("Error", e?.message ?? "No se pudo revocar");
-    } finally {
-      this.revokeTarget.set(null);
-    }
+    this.api.deleteApiKeyObs(target.id).subscribe({
+      next: () => {
+        this.toast.success("API Key revocada", `••••${target.keyPreview}`);
+        this.revokeTarget.set(null);
+        this.refresh();
+      },
+      error: (e) => {
+        this.toast.error("Error", e?.error?.message ?? e?.message ?? "No se pudo revocar");
+        this.revokeTarget.set(null);
+      },
+    });
   }
 
   usagePct(k: ApiKey): number {

@@ -14,6 +14,7 @@ import { RoleDeniedComponent } from "./components/role-denied/role-denied.compon
 import { BarChartComponent } from "./components/bar-chart/bar-chart.component";
 import { CurrencyPipe } from "./pipes/currency.pipe";
 import { DatePipe } from "./pipes/date.pipe";
+import { TranslatePipe } from "./pipes/translate.pipe";
 import { AppButtonDirective } from "./directives/app-button.directive";
 import { dateRangeValidator } from "./validators/date-range.validator";
 
@@ -31,6 +32,7 @@ import { dateRangeValidator } from "./validators/date-range.validator";
     BarChartComponent,
     CurrencyPipe,
     DatePipe,
+    TranslatePipe,
     AppButtonDirective,
   ],
   exports: [
@@ -46,6 +48,7 @@ import { dateRangeValidator } from "./validators/date-range.validator";
     BarChartComponent,
     CurrencyPipe,
     DatePipe,
+    TranslatePipe,
     AppButtonDirective,
     // Validators are functions, exported directly via the file.
   ],

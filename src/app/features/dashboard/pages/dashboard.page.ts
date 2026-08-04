@@ -9,40 +9,41 @@ import { DashboardData } from "../../../core/models/shipcore.models";
 import { PageHeaderComponent } from "../../../shared/components/page-header/page-header.component";
 import { DataStateComponent } from "../../../shared/components/data-state/data-state.component";
 import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar-chart/bar-chart.component";
+import { TranslatePipe } from "../../../shared/pipes/translate.pipe";
 
 @Component({
   selector: "app-dashboard-page",
   standalone: true,
-  imports: [CommonModule, PageHeaderComponent, DataStateComponent, BarChartComponent],
+  imports: [CommonModule, PageHeaderComponent, DataStateComponent, BarChartComponent, TranslatePipe],
   template: `
-    <div class="space-y-6">
+    <div class="dashboard-page space-y-8">
       <app-page-header
-        title="Dashboard"
-        description="Resumen de actividad de tu organización."
+        [title]="'view.dashboard' | t"
+        [description]="'dashboard.description' | t"
         [actionsTpl]="actionsTpl"
       ></app-page-header>
 
       <ng-template #actionsTpl>
         <button class="btn btn-outline btn-sm" (click)="refresh()" [disabled]="loading()">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.animate-spin]="loading()"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
-          Actualizar
+          {{ 'action.refresh' | t }}
         </button>
       </ng-template>
 
       <app-data-state [isLoading]="loading()" [error]="error()" [onRetry]="refresh" [empty]="!loading() && !error() && !data()">
         @if (data(); as d) {
           <!-- KPIs -->
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="dashboard-kpi-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             <!-- KPI: Quotes this month -->
             <div class="card overflow-hidden">
               <div class="card-content relative p-5">
                 <div class="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-primary/40 to-primary/0"></div>
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">Cotizaciones del mes</p>
+                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ 'kpi.quotesMonth' | t }}</p>
                     <p class="mt-2 text-3xl font-bold tracking-tight">{{ d.kpis.quotesMonth }}</p>
                     <p class="mt-1.5 text-xs text-muted-foreground">
-                      Uso: <span class="font-medium text-foreground">{{ d.organization.currentUsage }}</span> / {{ d.organization.softLimit }} (soft)
+                      {{ 'kpi.usage' | t }}: <span class="font-medium text-foreground">{{ d.organization.currentUsage }}</span> / {{ d.organization.softLimit }} (soft)
                     </p>
                   </div>
                   <div class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -58,10 +59,10 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
                 <div class="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-sky-400/40 to-sky-400/0"></div>
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">Couriers activos</p>
+                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ 'kpi.activeCarriers' | t }}</p>
                     <p class="mt-2 text-3xl font-bold tracking-tight">{{ d.kpis.activeCarriers }}</p>
                     <p class="mt-1.5 text-xs text-muted-foreground">
-                      <span class="font-medium text-emerald-600 dark:text-emerald-400">Todos operativos</span>
+                      <span class="font-medium text-emerald-600 dark:text-emerald-400">{{ 'kpi.allOperational' | t }}</span>
                     </p>
                   </div>
                   <div class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400">
@@ -77,10 +78,10 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
                 <div class="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-emerald-400/40 to-emerald-400/0"></div>
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">Tarifa promedio</p>
+                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ 'kpi.avgRate' | t }}</p>
                     <p class="mt-2 text-3xl font-bold tracking-tight">{{ fmtCurrency(d.kpis.avgRate) }}</p>
                     <p class="mt-1.5 text-xs text-muted-foreground">
-                      <span class="font-medium text-foreground">{{ d.kpis.quotesMonth }}</span> cotizaciones
+                      <span class="font-medium text-foreground">{{ d.kpis.quotesMonth }}</span> {{ ('nav.quotes' | t).toLowerCase() }}
                     </p>
                   </div>
                   <div class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
@@ -96,10 +97,10 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
                 <div class="absolute inset-y-0 right-0 w-1 bg-gradient-to-b from-rose-400/40 to-rose-400/0"></div>
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">Alertas de tarifas</p>
+                    <p class="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ 'kpi.rateAlerts' | t }}</p>
                     <p class="mt-2 text-3xl font-bold tracking-tight">{{ d.kpis.rateAlerts }}</p>
                     <p class="mt-1.5 text-xs text-muted-foreground">
-                      {{ expiredCount(d) }} expiradas · {{ expiringCount(d) }} por vencer
+                      {{ expiredCount(d) }} {{ 'kpi.expired' | t }} · {{ expiringCount(d) }} {{ 'kpi.expiring' | t }}
                     </p>
                   </div>
                   <div class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">
@@ -111,15 +112,15 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
           </div>
 
           <!-- Two-column layout -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div class="dashboard-main-grid grid grid-cols-1 xl:grid-cols-3">
             <!-- Bar chart -->
             <div class="card lg:col-span-2">
               <div class="card-header flex-row items-center justify-between">
                 <div>
-                  <div class="card-title text-base">Cotizaciones por courier</div>
-                  <p class="card-description">Distribución de las cotizaciones recientes por courier.</p>
+                  <div class="card-title text-base">{{ 'dashboard.quotesByCarrier' | t }}</div>
+                  <p class="card-description">{{ 'dashboard.quotesByCarrierDesc' | t }}</p>
                 </div>
-                <span class="badge badge-secondary">{{ totalQuotes(d) }} total</span>
+                <span class="badge badge-secondary">{{ totalQuotes(d) }} {{ 'label.total' | t }}</span>
               </div>
               <div class="card-content">
                 <app-bar-chart [dataInput]="chartData(d)" [height]="280"></app-bar-chart>
@@ -129,7 +130,7 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
             <!-- Rate alerts -->
             <div class="card">
               <div class="card-header flex-row items-center justify-between">
-                <div class="card-title text-base">Alertas de tarifas</div>
+                <div class="card-title text-base">{{ 'kpi.rateAlerts' | t }}</div>
                 @if (d.rateAlerts.length > 0) {
                   <span class="badge bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">{{ d.rateAlerts.length }}</span>
                 }
@@ -140,8 +141,8 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
                     <div class="flex size-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
                     </div>
-                    <p class="text-sm font-medium">Sin alertas de tarifas</p>
-                    <p class="text-xs text-muted-foreground">Todas las tarifas activas están vigentes por más de 7 días.</p>
+                    <p class="text-sm font-medium">{{ 'dashboard.noRateAlerts' | t }}</p>
+                    <p class="text-xs text-muted-foreground">{{ 'dashboard.noRateAlertsDesc' | t }}</p>
                   </div>
                 } @else {
                   <ul class="divide-y">
@@ -167,7 +168,7 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
                             ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400'
                             : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400'"
                         >
-                          {{ a.expired ? "Expirada" : daysUntil(a.validTo) === 0 ? "Hoy" : daysUntil(a.validTo) + "d" }}
+                          {{ a.expired ? ('status.expired' | t) : daysUntil(a.validTo) === 0 ? ('status.today' | t) : daysUntil(a.validTo) + "d" }}
                         </span>
                       </li>
                     }
@@ -180,22 +181,22 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
           <!-- Recent quotes -->
           <div class="card">
             <div class="card-header flex-row items-center justify-between">
-              <div class="card-title text-base">Cotizaciones recientes</div>
-              <button class="btn btn-ghost btn-sm" (click)="goToHistory()">Ver historial</button>
+              <div class="card-title text-base">{{ 'dashboard.recentQuotes' | t }}</div>
+              <button class="btn btn-ghost btn-sm" (click)="goToHistory()">{{ 'dashboard.viewHistory' | t }}</button>
             </div>
             <div class="card-content">
               @if (d.recentQuotes.length === 0) {
-                <p class="py-6 text-center text-sm text-muted-foreground">Aún no hay cotizaciones recientes.</p>
+                <p class="py-6 text-center text-sm text-muted-foreground">{{ 'dashboard.noRecentQuotes' | t }}</p>
               } @else {
                 <div class="overflow-x-auto">
                   <table class="w-full text-sm">
                     <thead>
                       <tr class="border-b text-left text-xs text-muted-foreground">
-                        <th class="px-3 py-2.5 font-medium">Fecha</th>
-                        <th class="px-3 py-2.5 font-medium">Ruta</th>
-                        <th class="px-3 py-2.5 font-medium">Courier</th>
-                        <th class="px-3 py-2.5 text-right font-medium">Precio</th>
-                        <th class="px-3 py-2.5 font-medium">Estado</th>
+                        <th class="px-3 py-2.5 font-medium">{{ 'label.date' | t }}</th>
+                        <th class="px-3 py-2.5 font-medium">{{ 'label.route' | t }}</th>
+                        <th class="px-3 py-2.5 font-medium">{{ 'label.carrier' | t }}</th>
+                        <th class="px-3 py-2.5 text-right font-medium">{{ 'label.price' | t }}</th>
+                        <th class="px-3 py-2.5 font-medium">{{ 'label.status' | t }}</th>
                         <th class="px-3 py-2.5"></th>
                       </tr>
                     </thead>
@@ -225,13 +226,13 @@ import { BarChartComponent, BarChartDatum } from "../../../shared/components/bar
                           </td>
                           <td class="px-3 py-2.5 whitespace-nowrap">
                             @switch (q.status) {
-                              @case ("booked") { <span class="badge border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">Reservada</span> }
-                              @case ("expired") { <span class="badge badge-secondary">Expirada</span> }
-                              @default { <span class="badge badge-outline">Cotizada</span> }
+                              @case ("booked") { <span class="badge border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">{{ 'status.booked' | t }}</span> }
+                              @case ("expired") { <span class="badge badge-secondary">{{ 'status.expired' | t }}</span> }
+                              @default { <span class="badge badge-outline">{{ 'status.quoted' | t }}</span> }
                             }
                           </td>
                           <td class="px-3 py-2.5 text-right">
-                            <button class="btn btn-ghost btn-sm" (click)="goToDetail(q.id)">Ver</button>
+                            <button class="btn btn-ghost btn-sm" (click)="goToDetail(q.id)">{{ 'action.view' | t }}</button>
                           </td>
                         </tr>
                       }
@@ -265,16 +266,23 @@ export class DashboardPageComponent implements OnInit {
   refresh = (): void => {
     this.loading.set(true);
     this.error.set(null);
-    setTimeout(() => {
-      try {
-        const d = this.api.dashboard();
+    this.api.dashboardObs().subscribe({
+      next: (d) => {
         this.data.set(d);
-      } catch (e) {
-        this.error.set(e);
-      } finally {
         this.loading.set(false);
-      }
-    }, 100);
+      },
+      error: () => {
+        // Fallback a mock
+        try {
+          const d = this.api.dashboard();
+          this.data.set(d);
+        } catch (e) {
+          this.error.set(e);
+        } finally {
+          this.loading.set(false);
+        }
+      },
+    });
   };
 
   fmtCurrency(amount: number): string {

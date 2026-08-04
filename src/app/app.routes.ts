@@ -1,10 +1,7 @@
-// Top-level Angular Router configuration. ShipCore uses an in-app SPA
-// router service (RouterService) for view switching, but we still expose
-// a RouterModule so lazy loading can be wired up if needed in the future.
-//
-// Each feature module declares its own routes file (e.g. `quotes.routes.ts`)
-// that can be lazy-loaded via `loadChildren`.
+// Top-level Angular Router configuration.
 import { Routes } from "@angular/router";
+import { authGuard } from "./core/guards/auth.guard";
+import { roleGuard } from "./core/guards/role.guard";
 
 export const APP_ROUTES: Routes = [
   {
@@ -15,6 +12,7 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: "dashboard",
+    canActivate: [authGuard],
     loadComponent: () =>
       import("./features/dashboard/pages/dashboard.page").then(
         (m) => m.DashboardPageComponent,
@@ -22,11 +20,13 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: "quotes",
+    canActivate: [authGuard],
     loadChildren: () =>
       import("./features/quotes/quotes.routes").then((m) => m.QUOTES_ROUTES),
   },
   {
     path: "history",
+    canActivate: [authGuard],
     loadComponent: () =>
       import("./features/history/pages/history.page").then(
         (m) => m.HistoryPageComponent,
@@ -34,6 +34,7 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: "carriers",
+    canActivate: [authGuard],
     loadComponent: () =>
       import("./features/carriers/pages/carriers-list.page").then(
         (m) => m.CarriersListPageComponent,
@@ -41,6 +42,7 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: "rules",
+    canActivate: [authGuard, roleGuard(["admin"])],
     loadComponent: () =>
       import("./features/rules/pages/rules-list.page").then(
         (m) => m.RulesListPageComponent,
@@ -48,10 +50,21 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: "org",
+    canActivate: [authGuard, roleGuard(["admin"])],
     loadComponent: () =>
       import("./features/org/pages/org-config.page").then(
         (m) => m.OrgConfigPageComponent,
       ),
   },
+  {
+    path: "plan",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./features/org/components/org-plan.component").then(
+        (m) => m.OrgPlanComponent,
+      ),
+  },
   { path: "**", redirectTo: "" },
 ];
+
+

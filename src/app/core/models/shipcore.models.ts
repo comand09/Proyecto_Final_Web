@@ -16,6 +16,9 @@ export type RuleAction = "surcharge" | "discount" | "block" | "prefer";
 export interface Organization {
   id: string;
   name: string;
+  ruc?: string;
+  address?: string;
+  phone?: string;
   country: Country;
   plan: Plan;
   softLimit: number;
@@ -27,6 +30,7 @@ export interface Organization {
 export interface User {
   id: string;
   organizationId: string;
+  organizationName?: string;
   email: string;
   password: string; // demo only
   name: string;
@@ -223,4 +227,13 @@ export type ViewName =
   | "history"
   | "carriers"
   | "rules"
+  | "plan"
   | "org";
+
+export type AuthSession = Session;
+export type PlanTier = Plan;
+export type DashboardKpi = DashboardData["kpis"];
+export type QuoteByCarrier = DashboardData["quotesByCarrier"][number];
+export type RateAlert = DashboardData["rateAlerts"][number];
+export type RecentQuote = DashboardData["recentQuotes"][number];
+

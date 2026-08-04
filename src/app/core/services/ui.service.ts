@@ -2,23 +2,26 @@
 // locale, theme. Uses Angular signals + localStorage persistence.
 
 import { Injectable, signal, effect } from "@angular/core";
-import { Locale } from "./i18n.service";
+import { LOCALES, Locale } from "./i18n.service";
 
 const STORAGE_KEY = "shipcore-ui";
 
 interface PersistedUI {
   locale: Locale;
   theme: "light" | "dark";
+  sidebarCollapsed?: boolean;
 }
 
 @Injectable({ providedIn: "root" })
 export class UiService {
   private _sidebarOpen = signal(false);
-  private _locale = signal<Locale>("es-AR");
+  private _sidebarCollapsed = signal(false);
+  private _locale = signal<Locale>("es-ES");
   private _theme = signal<"light" | "dark">("light");
   private _hydrated = false;
 
   readonly sidebarOpen = this._sidebarOpen.asReadonly();
+  readonly sidebarCollapsed = this._sidebarCollapsed.asReadonly();
   readonly locale = this._locale.asReadonly();
   readonly theme = this._theme.asReadonly();
 
@@ -29,13 +32,14 @@ export class UiService {
       if (!this._hydrated) return;
       const theme = this._theme();
       const locale = this._locale();
+      const sidebarCollapsed = this._sidebarCollapsed();
       if (typeof document !== "undefined") {
         if (theme === "dark") document.documentElement.classList.add("dark");
         else document.documentElement.classList.remove("dark");
         document.documentElement.lang = locale;
       }
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ locale, theme }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ locale, theme, sidebarCollapsed }));
       } catch {
         /* ignore */
       }
@@ -47,8 +51,9 @@ export class UiService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as PersistedUI;
-        if (parsed.locale) this._locale.set(parsed.locale);
+        if (parsed.locale && (LOCALES as readonly string[]).includes(parsed.locale)) this._locale.set(parsed.locale);
         if (parsed.theme) this._theme.set(parsed.theme);
+        if (typeof parsed.sidebarCollapsed === "boolean") this._sidebarCollapsed.set(parsed.sidebarCollapsed);
       }
     } catch {
       /* ignore */
@@ -67,6 +72,14 @@ export class UiService {
 
   toggleSidebar(): void {
     this._sidebarOpen.update((v) => !v);
+  }
+
+  setSidebarCollapsed(collapsed: boolean): void {
+    this._sidebarCollapsed.set(collapsed);
+  }
+
+  toggleSidebarCollapsed(): void {
+    this._sidebarCollapsed.update((v) => !v);
   }
 
   setLocale(locale: Locale): void {

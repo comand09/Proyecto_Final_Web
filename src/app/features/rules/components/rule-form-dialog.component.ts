@@ -279,39 +279,36 @@ export class RuleFormDialogComponent implements OnInit, OnChanges {
     }
     this.submitting.set(true);
     const v = this.form.getRawValue();
-    setTimeout(() => {
-      try {
-        if (this.rule) {
-          this.api.updateRule(this.rule.id, {
-            name: v.name,
-            field: v.field,
-            operator: v.operator,
-            value: v.value,
-            action: v.action,
-            actionValue: Number(v.actionValue) || 0,
-            priority: Number(v.priority),
-            active: v.active,
-          });
-          this.toast.success("Regla actualizada", v.name);
-        } else {
-          this.api.createRule({
-            name: v.name,
-            field: v.field,
-            operator: v.operator,
-            value: v.value,
-            action: v.action,
-            actionValue: Number(v.actionValue) || 0,
-            priority: Number(v.priority),
-            active: v.active,
-          });
-          this.toast.success("Regla creada", v.name);
-        }
-        this.saved.emit();
-      } catch (e: any) {
-        this.toast.error("Error", e?.message ?? "No se pudo guardar");
-      } finally {
+
+    const payload = {
+      name:        v.name,
+      field:       v.field,
+      operator:    v.operator,
+      value:       v.value,
+      action:      v.action,
+      actionValue: Number(v.actionValue) || 0,
+      priority:    Number(v.priority),
+      active:      v.active,
+    };
+
+    const request$ = this.rule
+      ? this.api.updateRuleObs(this.rule.id, payload)
+      : this.api.createRuleObs(payload);
+
+    request$.subscribe({
+      next: () => {
+        this.toast.success(
+          this.rule ? "Regla actualizada" : "Regla creada",
+          v.name
+        );
         this.submitting.set(false);
-      }
-    }, 300);
+        this.saved.emit();
+      },
+      error: (e: any) => {
+        const msg = e?.error?.message || e?.message || "No se pudo guardar";
+        this.toast.error("Error al guardar regla", msg);
+        this.submitting.set(false);
+      },
+    });
   }
 }

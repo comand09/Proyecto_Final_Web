@@ -3,18 +3,26 @@
 // dashboard layout. Mirrors the React `useIsAuthenticated` check.
 
 import { Injectable, inject } from "@angular/core";
-import { CanActivateFn } from "@angular/router";
+import { CanActivateFn, Router } from "@angular/router";
 import { AuthService } from "../services/auth.service";
 
 @Injectable({ providedIn: "root" })
 export class AuthGuardService {
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
   canActivate(): boolean {
-    return this.auth.isAuthenticated();
+    if (this.auth.isAuthenticated()) return true;
+    this.router.navigate(["/"]);
+    return false;
   }
 }
 
 export const authGuard: CanActivateFn = () => {
-  return inject(AuthService).isAuthenticated();
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isAuthenticated()) {
+    return true;
+  }
+  return router.createUrlTree(["/"]);
 };
+
